@@ -1,4 +1,5 @@
 import os
+import typing_extensions
 
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -185,42 +186,75 @@ class MainLayout(BoxLayout):
         super().__init__(orientation='vertical', **kwargs)
 
         # Create a horizontal BoxLayout for the buttons
-        button_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.2))
+        button_layout = BoxLayout(
+            orientation='horizontal', 
+            size_hint=(1, 0.1),
+            padding=(20, 20, 20, 20),  # Add padding: (left, top, right, bottom)
+            spacing=20  # Add spacing between buttons
+        )
 
         self.select_image_btn = Button(
-            text = 'Select Image from Gallery', 
-            halign = 'center', 
-            valign = 'middle', 
-            padding = (20, 20),
-            background_color = (11/255, 35/255, 65/255, 1),  # Normal state color
-            background_normal = '',  # Remove default background
-            background_down = '',  # Remove default pressed background
+            text='Select Image from Gallery', 
+            halign='center', 
+            valign='middle', 
+            padding=(20, 20),
+            font_size='12sp',  # Scale down text size
+            background_color=(11/255, 35/255, 65/255, 1),  # Normal state color
+            background_normal='',  # Remove default background
+            background_down='',  # Remove default pressed background
+            text_size=(None, None)  # Enable text wrapping
         )
-        self.select_image_btn.bind(size=self._update_text_size)  # Update text size dynamically
+        # Add a border using Canvas instructions
+        with self.select_image_btn.canvas.before:
+            from kivy.graphics import Color, Line
+            Color(1, 1, 1, 1)  # White border color
+            self.select_image_btn.border_line = Line(rectangle=(self.select_image_btn.x, self.select_image_btn.y, self.select_image_btn.width, self.select_image_btn.height), width=2)
+
+        # Bind size and position updates to redraw the border
+        self.select_image_btn.bind(pos=self._update_border, size=self._update_border)
+        self.select_image_btn.bind(size=lambda instance, value: setattr(instance, 'text_size', (instance.width - 20, None)))  # Adjust text wrapping dynamically
         self.select_image_btn.bind(on_release=self.select_image)
 
         self.model_toggle_btn = Button(
-            text = 'Toggle Model Type\n(Goat Eye Disease Classification)',
-            halign = 'center', 
-            valign = 'middle', 
-            padding = (20, 20),
-            background_color = (11/255, 35/255, 65/255, 1),  # Normal state color
-            background_normal = '',  # Remove default background
-            background_down = '',  # Remove default pressed background
+            text='Change Model\n(Goat Eye Disease)', 
+            halign='center', 
+            valign='middle', 
+            padding=(20, 20),
+            font_size='12sp',  # Scale down text size
+            background_color=(11/255, 35/255, 65/255, 1),  # Normal state color
+            background_normal='',  # Remove default background
+            background_down='',  # Remove default pressed background
+            text_size=(None, None)  # Enable text wrapping
         )
-        self.model_toggle_btn.bind(size=self._update_text_size)  # Update text size dynamically
+        # Add a border using Canvas instructions
+        with self.model_toggle_btn.canvas.before:
+            Color(1, 1, 1, 1)  # White border color
+            self.model_toggle_btn.border_line = Line(rectangle=(self.model_toggle_btn.x, self.model_toggle_btn.y, self.model_toggle_btn.width, self.model_toggle_btn.height), width=2)
+
+        # Bind size and position updates to redraw the border
+        self.model_toggle_btn.bind(pos=self._update_border, size=self._update_border)
+        self.model_toggle_btn.bind(size=lambda instance, value: setattr(instance, 'text_size', (instance.width - 20, None)))  # Adjust text wrapping dynamically
         self.model_toggle_btn.bind(on_release=self.toggle_model)
 
         self.process_btn = Button(
-            text = 'Process Image',
-            halign = 'center', 
-            valign = 'middle', 
-            padding = (20, 20),
-            background_color = (11/255, 35/255, 65/255, 1),  # Normal state color
-            background_normal = '',  # Remove default background
-            background_down = '',  # Remove default pressed background
+            text='Process Image', 
+            halign='center', 
+            valign='middle', 
+            padding=(20, 20),
+            font_size='12sp',  # Scale down text size
+            background_color=(11/255, 35/255, 65/255, 1),  # Normal state color
+            background_normal='',  # Remove default background
+            background_down='',  # Remove default pressed background
+            text_size=(None, None)  # Enable text wrapping
         )
-        self.process_btn.bind(size=self._update_text_size)  # Update text size dynamically
+        # Add a border using Canvas instructions
+        with self.process_btn.canvas.before:
+            Color(1, 1, 1, 1)  # White border color
+            self.process_btn.border_line = Line(rectangle=(self.process_btn.x, self.process_btn.y, self.process_btn.width, self.process_btn.height), width=2)
+
+        # Bind size and position updates to redraw the border
+        self.process_btn.bind(pos=self._update_border, size=self._update_border)
+        self.process_btn.bind(size=lambda instance, value: setattr(instance, 'text_size', (instance.width - 20, None)))  # Adjust text wrapping dynamically
         self.process_btn.bind(on_release=self.process_image)
 
         # Dynamically set the pressed color
@@ -237,12 +271,12 @@ class MainLayout(BoxLayout):
         result_and_image_layout = BoxLayout(orientation='vertical', size_hint=(1, 0.8))
 
         # Add the result label
-        self.result_label = Label(text='Select an image ', size_hint=(1, 0.2), color=(255/255, 255/255, 255/255, 255/255), halign='center', valign='middle')  # Black text
+        self.result_label = Label(text='Select an image ', size_hint=(1, 0.1), color=(255/255, 255/255, 255/255, 255/255), halign='center', valign='middle')  # Black text
         result_and_image_layout.add_widget(self.result_label)
 
         # Add a FloatLayout to position the Image widget
-        image_layout = FloatLayout(size_hint=(1, 0.6))
-        self.image_display = Image(size_hint=(0.8, 0.8))  # Adjust size
+        image_layout = FloatLayout(size_hint=(1, 0.7))
+        self.image_display = Image(size_hint=(0.9, 0.9))  # Adjust size
         image_layout.add_widget(self.image_display)
 
         # Center the image within the FloatLayout
@@ -258,6 +292,12 @@ class MainLayout(BoxLayout):
 
     def _update_text_size(self, instance, value):
         instance.text_size = (instance.width, None)
+
+    def _update_border(self, instance, value):
+        """
+        Update the border position and size when the button is resized or moved.
+        """
+        instance.border_line.rectangle = (instance.x, instance.y, instance.width, instance.height)
 
     def select_image(self, instance):
         if platform == 'android':
@@ -280,10 +320,10 @@ class MainLayout(BoxLayout):
     def toggle_model(self, instance):
         if self.model_choice == 'GoatEyes':
             self.model_choice = 'TextOCR'
-            self.model_toggle_btn.text = 'Toggle Model Type\n(Handwritten Text Transcription)'
+            self.model_toggle_btn.text = 'Change Model\n(Handwritten Text OCR)'
         else:
             self.model_choice = 'GoatEyes'
-            self.model_toggle_btn.text = 'Toggle Model Type\n(Goat Eye Disease Classification)'
+            self.model_toggle_btn.text = 'Change Model\n(Goat Eye Disease)'
 
     def process_image(self, instance):
         if not self.selected_image:
@@ -298,35 +338,26 @@ class MainLayout(BoxLayout):
         self.result_label.text = result
 
 class MLApp(App):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.title = "ASML 2025"  # Set the custom title
+
     def build(self):
+        if platform == 'android':
+            Window.fullscreen = True  # Set fullscreen for Android
+        else:
+            Window.size = (400, 600)  # Set size for other platforms
+            Window.resizable = True  # Allow resizing
+            Window.borderless = False  # Make the window borderless
 
-        self.aspect_ratio = 1440 / 2560
-        window_width = 360
-        window_height = int(window_width / self.aspect_ratio)
-        Window.size = (window_width, window_height)  # Example: 800x600 pixels
-        Window.resizable = True  # Disable resizing
         Window.clearcolor = (11/255, 35/255, 65/255, 255/255)  # Auburn Navy background
-
-        Window.set_title("ASML 2025")
         icon_path = os.path.join(os.path.dirname(__file__), "goat.ico")
         if os.path.exists(icon_path):
             Window.set_icon(icon_path)
         else:
             print(f"Icon file not found: {icon_path}")
 
-        Window.bind(on_resize=self._resize_with_aspect_ratio)
         return MainLayout()
-
-    def _resize_with_aspect_ratio(self, window, width, height):
-        target_width = int(width)
-        target_height = int(width / self.aspect_ratio)
-
-        if width / height > self.aspect_ratio:
-            if Window.size != (target_width, height):  # Only update if size differs
-                Window.size = (target_width, height)
-        else:
-            if Window.size != (width, target_height):  # Only update if size differs
-                Window.size = (width, target_height)
 
 if __name__ == '__main__':
     MLApp().run()
