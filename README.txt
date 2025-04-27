@@ -9,5 +9,5 @@ Download the models from the link below and include in the same directory as the
 GoatEyesModel.pth: https://drive.google.com/uc?export=download&id=1UrEeddj0_lEA3zVMyF0LRUeDoM2WtOFc
 TextOCRModel.pth: 
 
-I have not seen it classify any image as diseased yet.
-Look into output of goat eyes ML model to determine if it is interpreting the output correctly.
+Need to work on the second model for Handwritten Text OCR.
+Need to find an alternative to PyTorch because Buildozer APK is much too large.
