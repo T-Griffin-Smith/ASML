@@ -10,6 +10,7 @@ from kivy.core.window import Window
 from kivy.uix.filechooser import FileChooserIconView
 from kivy.properties import StringProperty
 from kivy.uix.floatlayout import FloatLayout  # Import FloatLayout
+from kivy.core.image import Image as CoreImage  # Import CoreImage for setting the icon
 
 # Android imports
 from kivy.utils import platform
@@ -144,32 +145,32 @@ preprocess = Compose([
     Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-def model_a_predict(image_path):
+def model_a_predict(image_path, threshold=0.5):
+    """
+    Predicts whether a goat is diseased based on a single image.
+    
+    Args:
+        image_path (str): Path to the input image.
+        threshold (float): Threshold for determining if the goat is diseased.
+        
+    Returns:
+        str: Prediction result as a string.
+    """
     try:
-        # Open the image using PIL
-        image = PILImage.open(image_path).convert('RGB')
-        
-        # Preprocess the image
-        input_tensor = preprocess(image).unsqueeze(0)  # Add batch dimension
-        
-        # Perform inference
+        # Use the globally defined resnet_unet model
+        resnet_unet.eval()
+        image = PILImage.open(image_path).convert("RGB")  # Use PILImage for consistency
+        transformed_image = preprocess(image).unsqueeze(0).to("cpu")  # Add batch dimension and use preprocess
+
         with torch.no_grad():
-            output = resnet_unet(input_tensor)
-        
-        # Get the predicted mask
-        predicted_mask = torch.argmax(output, dim=1).squeeze(0).numpy()
-        
-        # Analyze the mask to determine if the animal exhibits disease
-        diseased_pixels = (predicted_mask == 1).sum()  # Count pixels classified as diseased
-        total_pixels = predicted_mask.size  # Total number of pixels in the mask
-        disease_percentage = (diseased_pixels / total_pixels) * 100  # Percentage of diseased pixels
-        
-        # Define a threshold for disease classification (e.g., 5% of the mask)
-        threshold = 5.0
-        if disease_percentage > threshold:
-            return f"Prediction: Diseased\n({disease_percentage:.2f}% of the mask is diseased)"
+            output = resnet_unet(transformed_image)  # Model output
+        pred_mask = torch.argmax(output, dim=1).squeeze(0).cpu().numpy()  # Predicted mask
+
+        is_diseased = any(1 in row for row in pred_mask)  # Check if any row contains a 1
+        if is_diseased:
+            return "Prediction: Goat is diseased."
         else:
-            return f"Prediction: Healthy\n({disease_percentage:.2f}% of the mask is diseased)"
+            return "Prediction: Goat is healthy."
     except Exception as e:
         return f"Error processing image: {str(e)}"
 
@@ -186,20 +187,46 @@ class MainLayout(BoxLayout):
         # Create a horizontal BoxLayout for the buttons
         button_layout = BoxLayout(orientation='horizontal', size_hint=(1, 0.2))
 
-        self.select_image_btn = Button(text='Select Image from Gallery', halign='center', valign='middle')
-        self.select_image_btn.text_size = (self.select_image_btn.width, None)  # Allow wrapping based on button width
+        self.select_image_btn = Button(
+            text = 'Select Image from Gallery', 
+            halign = 'center', 
+            valign = 'middle', 
+            padding = (20, 20),
+            background_color = (11/255, 35/255, 65/255, 1),  # Normal state color
+            background_normal = '',  # Remove default background
+            background_down = '',  # Remove default pressed background
+        )
         self.select_image_btn.bind(size=self._update_text_size)  # Update text size dynamically
         self.select_image_btn.bind(on_release=self.select_image)
 
-        self.model_toggle_btn = Button(text='Toggle Model Type\n(Goat Eye Disease Classification)', halign='center', valign='middle')
-        self.model_toggle_btn.text_size = (self.model_toggle_btn.width, None)  # Allow wrapping based on button width
+        self.model_toggle_btn = Button(
+            text = 'Toggle Model Type\n(Goat Eye Disease Classification)',
+            halign = 'center', 
+            valign = 'middle', 
+            padding = (20, 20),
+            background_color = (11/255, 35/255, 65/255, 1),  # Normal state color
+            background_normal = '',  # Remove default background
+            background_down = '',  # Remove default pressed background
+        )
         self.model_toggle_btn.bind(size=self._update_text_size)  # Update text size dynamically
         self.model_toggle_btn.bind(on_release=self.toggle_model)
 
-        self.process_btn = Button(text='Process Image', halign='center', valign='middle')
-        self.process_btn.text_size = (self.model_toggle_btn.width, None)  # Allow wrapping based on button width
+        self.process_btn = Button(
+            text = 'Process Image',
+            halign = 'center', 
+            valign = 'middle', 
+            padding = (20, 20),
+            background_color = (11/255, 35/255, 65/255, 1),  # Normal state color
+            background_normal = '',  # Remove default background
+            background_down = '',  # Remove default pressed background
+        )
         self.process_btn.bind(size=self._update_text_size)  # Update text size dynamically
         self.process_btn.bind(on_release=self.process_image)
+
+        # Dynamically set the pressed color
+        for button in [self.select_image_btn, self.model_toggle_btn, self.process_btn]:
+            button.bind(on_press=lambda instance: setattr(instance, 'background_color', (73/255, 90/255, 112/255, 1)))
+            button.bind(on_release=lambda instance: setattr(instance, 'background_color', (11/255, 35/255, 65/255, 1)))
 
         # Add buttons to the horizontal layout
         button_layout.add_widget(self.select_image_btn)
@@ -210,7 +237,7 @@ class MainLayout(BoxLayout):
         result_and_image_layout = BoxLayout(orientation='vertical', size_hint=(1, 0.8))
 
         # Add the result label
-        self.result_label = Label(text='Result will appear here', size_hint=(1, 0.2), color=(0, 0, 0, 1), halign='center', valign='middle')  # Black text
+        self.result_label = Label(text='Select an image ', size_hint=(1, 0.2), color=(255/255, 255/255, 255/255, 255/255), halign='center', valign='middle')  # Black text
         result_and_image_layout.add_widget(self.result_label)
 
         # Add a FloatLayout to position the Image widget
@@ -239,7 +266,7 @@ class MainLayout(BoxLayout):
         else:
             # For desktop testing
             content = FileChooserIconView(filters=["*.png", "*.jpg", "*.jpeg"])
-            popup = Popup(title="Select Image", content=content, size_hint=(0.9, 0.9))
+            popup = Popup(title="Select Image", content=content, size_hint=(1, 1))
             content.bind(on_submit=lambda chooser, selection, touch: (self.handle_selection(selection), popup.dismiss()))
             popup.open()
 
@@ -272,17 +299,26 @@ class MainLayout(BoxLayout):
 
 class MLApp(App):
     def build(self):
+
         self.aspect_ratio = 1440 / 2560
         window_width = 360
         window_height = int(window_width / self.aspect_ratio)
         Window.size = (window_width, window_height)  # Example: 800x600 pixels
-        Window.resizable = False  # Disable resizing
-        Window.clearcolor = (1, 1, 1, 1)  # White background
+        Window.resizable = True  # Disable resizing
+        Window.clearcolor = (11/255, 35/255, 65/255, 255/255)  # Auburn Navy background
+
+        Window.set_title("ASML 2025")
+        icon_path = os.path.join(os.path.dirname(__file__), "goat.ico")
+        if os.path.exists(icon_path):
+            Window.set_icon(icon_path)
+        else:
+            print(f"Icon file not found: {icon_path}")
+
         Window.bind(on_resize=self._resize_with_aspect_ratio)
         return MainLayout()
 
     def _resize_with_aspect_ratio(self, window, width, height):
-        target_width = int(height * self.aspect_ratio)
+        target_width = int(width)
         target_height = int(width / self.aspect_ratio)
 
         if width / height > self.aspect_ratio:
