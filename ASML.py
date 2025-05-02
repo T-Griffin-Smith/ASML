@@ -169,9 +169,9 @@ def model_a_predict(image_path, threshold=0.5):
 
         is_diseased = any(1 in row for row in pred_mask)  # Check if any row contains a 1
         if is_diseased:
-            return "Prediction: Goat is diseased."
+            return f"Selected: {os.path.basename(image_path)}\nPrediction: Goat is diseased."
         else:
-            return "Prediction: Goat is healthy."
+            return f"Selected: {os.path.basename(image_path)}\nPrediction: Goat is healthy."
     except Exception as e:
         return f"Error processing image: {str(e)}"
 
@@ -271,7 +271,7 @@ class MainLayout(BoxLayout):
         result_and_image_layout = BoxLayout(orientation='vertical', size_hint=(1, 0.8))
 
         # Add the result label
-        self.result_label = Label(text='Select an image ', size_hint=(1, 0.1), color=(255/255, 255/255, 255/255, 255/255), halign='center', valign='middle')  # Black text
+        self.result_label = Label(text='Select an image\nThen Select \"Process Image\"', size_hint=(1, 0.1), color=(255/255, 255/255, 255/255, 255/255), halign='center', valign='middle')  # Black text
         result_and_image_layout.add_widget(self.result_label)
 
         # Add a FloatLayout to position the Image widget
@@ -306,14 +306,14 @@ class MainLayout(BoxLayout):
         else:
             # For desktop testing
             content = FileChooserIconView(filters=["*.png", "*.jpg", "*.jpeg"])
-            popup = Popup(title="Select Image", content=content, size_hint=(1, 1))
+            popup = Popup(title="Select Image\nThen Select \"Process Image\"", content=content, size_hint=(1, 1))
             content.bind(on_submit=lambda chooser, selection, touch: (self.handle_selection(selection), popup.dismiss()))
             popup.open()
 
     def handle_selection(self, selection):
         if selection:
             self.selected_image = selection[0]
-            self.result_label.text = f"Selected: {os.path.basename(self.selected_image)}"  # Extract file name
+            self.result_label.text = f"Selected: {os.path.basename(self.selected_image)}\nSelect model type and process image"  # Extract file name
             self.result_label.text_size = (self.result_label.width, None)  # Allow text wrapping
             self.image_display.source = self.selected_image  # Update the image source
 
@@ -327,7 +327,7 @@ class MainLayout(BoxLayout):
 
     def process_image(self, instance):
         if not self.selected_image:
-            self.result_label.text = "Please select an image first!"
+            self.result_label.text = "Please select an image!\nThen Select \"Process Image\""
             return
         
         if self.model_choice == 'GoatEyes':
