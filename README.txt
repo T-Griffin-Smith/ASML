@@ -143,11 +143,9 @@ wrapt==1.17.2`
 
 ## Project Successes
 
-The app created with Kivy works well.
-
-The buttons are bound to python function definitions for loading an image, selecting a model, and passing the image to the selected model. The result is then displayed on-screen. This process works perfectly for GoatEyesModel.
-
-The training results showed good CTC losses for TextOCRModel. Unfortunately, the model did not work beyond this, as described below.
+- The app created with Kivy works well.
+- The buttons are bound to python function definitions for loading an image, selecting a model, and passing the image to the selected model. The result is then displayed on-screen. This process works perfectly for GoatEyesModel.
+- The training results showed good CTC losses for TextOCRModel. Unfortunately, the model did not work beyond this, as described below.
 
 ---
 
